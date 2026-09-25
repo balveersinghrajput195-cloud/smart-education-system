@@ -1,5 +1,6 @@
 import os
 import streamlit as st
+
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -14,12 +15,18 @@ st.set_page_config(
     layout="centered"
 )
 
-# Get API key
+# Get API key from .env or Streamlit Secrets
 api_key = os.getenv("GEMINI_API_KEY")
+
+if not api_key:
+    try:
+        api_key = st.secrets["GEMINI_API_KEY"]
+    except Exception:
+        api_key = None
 
 # Check API key
 if not api_key:
-    st.error("Gemini API key is missing. Please add GEMINI_API_KEY to your .env file.")
+    st.error("Gemini API key is missing.")
     st.stop()
 
 # Create Gemini client
@@ -62,6 +69,7 @@ politely redirect them toward lesson planning and classroom activities.
 
 # App title
 st.title("📚 AI Lesson Assistant")
+
 st.caption(
     "Smart Education System – AI-powered support for creative classroom activities"
 )
@@ -79,6 +87,7 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("---")
+
     st.write("**Project:** Smart Education System")
     st.write("**Module:** AI Lesson Assistant")
 
@@ -110,8 +119,8 @@ if st.button("✨ Generate Lesson", use_container_width=True):
 
     if not subject or not grade or not topic:
         st.warning("Please enter Subject, Class/Grade and Topic.")
-    else:
 
+    else:
         lesson_request = f"""
 Create a complete creative classroom lesson.
 
@@ -149,19 +158,15 @@ Make it practical and easy for a teacher to conduct in a classroom.
 
                 answer = response.text
 
-                st.session_state.messages.append(
-                    {
-                        "role": "user",
-                        "content": lesson_request
-                    }
-                )
+                st.session_state.messages.append({
+                    "role": "user",
+                    "content": lesson_request
+                })
 
-                st.session_state.messages.append(
-                    {
-                        "role": "assistant",
-                        "content": answer
-                    }
-                )
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": answer
+                })
 
                 st.success("Lesson generated successfully!")
 
@@ -219,21 +224,18 @@ if user_question:
                 )
 
                 answer = response.text
+
                 st.markdown(answer)
 
-                st.session_state.messages.append(
-                    {
-                        "role": "user",
-                        "content": user_question
-                    }
-                )
+                st.session_state.messages.append({
+                    "role": "user",
+                    "content": user_question
+                })
 
-                st.session_state.messages.append(
-                    {
-                        "role": "assistant",
-                        "content": answer
-                    }
-                )
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": answer
+                })
 
             except Exception as e:
                 st.error(
