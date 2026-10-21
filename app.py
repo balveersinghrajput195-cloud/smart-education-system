@@ -1,21 +1,168 @@
+
 import os
 import streamlit as st
-
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-# Load environment variables
 load_dotenv()
 
-# Page configuration
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(
-    page_title="AI Lesson Assistant",
-    page_icon="📚",
-    layout="centered"
+    page_title="Smart Education System",
+    page_icon="📘",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# Get API key from .env or Streamlit Secrets
+# ---------------- MODERN BLUE UI ----------------
+st.markdown("""
+<style>
+
+<style>
+/* Dark navy and royal blue theme */
+
+.stApp {
+    background: #0b1220;
+    color: #e5edff;
+}
+
+[data-testid="stHeader"] {
+    background: #0b1220;
+}
+
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #101a35 0%, #142b59 100%);
+    border-right: 1px solid #263c68;
+}
+
+[data-testid="stSidebar"] * {
+    color: #e5edff !important;
+}
+
+.main .block-container {
+    max-width: 1120px;
+    padding: 2rem 2rem 4rem;
+}
+
+h1, h2, h3 {
+    color: #8db8ff !important;
+}
+
+p, label, .stMarkdown {
+    color: #d5e1f7;
+}
+
+/* Hero banner */
+.hero {
+    background: linear-gradient(125deg, #142c62, #174ea6, #5136a8);
+    padding: 32px;
+    border: 1px solid #34599a;
+    border-radius: 22px;
+    color: #ffffff;
+    margin-bottom: 26px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.22);
+}
+
+.hero h1, .hero p {
+    color: #ffffff !important;
+}
+
+/* Input fields */
+.stTextInput input,
+.stTextArea textarea {
+    background: #141f35 !important;
+    color: #f1f5ff !important;
+    border: 1px solid #33496f !important;
+    border-radius: 12px !important;
+}
+
+.stTextInput input:focus,
+.stTextArea textarea:focus {
+    border-color: #6098ff !important;
+    box-shadow: 0 0 0 2px #1d3d73 !important;
+}
+
+.stTextInput input::placeholder,
+.stTextArea textarea::placeholder {
+    color: #94a8c8 !important;
+}
+
+/* Buttons */
+.stButton > button,
+.stDownloadButton > button {
+    background: linear-gradient(100deg, #2164d8, #6045d5);
+    color: #ffffff !important;
+    border: 1px solid #4779d9;
+    border-radius: 12px;
+    min-height: 45px;
+    font-weight: 600;
+}
+
+.stButton > button:hover,
+.stDownloadButton > button:hover {
+    background: linear-gradient(100deg, #347cf2, #7659ef);
+    border-color: #8db8ff;
+}
+
+/* Chat messages */
+div[data-testid="stChatMessage"] {
+    background: #111d33;
+    border: 1px solid #293e61;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+/* Chat input */
+div[data-testid="stChatInput"] {
+    background: #141f35;
+    border: 1px solid #3a5480;
+    border-radius: 16px;
+}
+
+div[data-testid="stChatInput"] textarea {
+    color: #ffffff !important;
+}
+
+/* Alerts and separators */
+div[data-testid="stAlert"] {
+    background: #152744;
+    border-radius: 12px;
+}
+
+hr {
+    border-color: #2b3d60 !important;
+}
+
+[data-testid="stSidebar"] hr {
+    border-color: #3a4f75 !important;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    color: #8da4c8;
+    padding: 20px 0;
+    font-size: 13px;
+}
+
+@media (max-width: 768px) {
+    .main .block-container {
+        padding: 1rem 1rem 3rem;
+    }
+
+    .hero {
+        padding: 22px;
+        border-radius: 16px;
+    }
+}
+</style>
+
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------- GEMINI API ----------------
 api_key = os.getenv("GEMINI_API_KEY")
 
 if not api_key:
@@ -24,221 +171,338 @@ if not api_key:
     except Exception:
         api_key = None
 
-# Check API key
 if not api_key:
-    st.error("Gemini API key is missing.")
+    st.error(
+        "Gemini API key is missing. Please add GEMINI_API_KEY "
+        "to your .env file or Streamlit Secrets."
+    )
     st.stop()
 
-# Create Gemini client
 client = genai.Client(api_key=api_key)
 
-# System prompt
+# ---------------- AI SYSTEM PROMPT ----------------
 SYSTEM_PROMPT = """
-You are AI Lesson Assistant, an AI assistant for school teachers.
+You are Smart Education System's AI Lesson Assistant.
 
-Your purpose is to help teachers create creative, practical and
-step-by-step classroom activities using Design Thinking.
+ROLE:
+Help teachers create effective lessons and explain educational
+topics in a clear, detailed, practical and engaging way.
 
-You must focus on:
-- Lesson planning
-- Creative classroom activities
-- Design Thinking
-- Student teamwork
-- Problem solving
-- Worksheets
-- Real-world classroom problems
+ANSWER QUALITY:
+- Use simple, clear English.
+- Start with a direct answer or easy definition.
+- Explain concepts step by step, from basic to advanced.
+- Use clear headings, numbered steps and bullet points.
+- Include relevant real-life and classroom examples.
+- Explain difficult terms in simple language.
+- Adapt the explanation to the given class or grade.
+- Include practical applications when useful.
+- Avoid unnecessary repetition and complicated wording.
+- Never invent facts; acknowledge uncertainty.
+- Answer all parts of the user's question.
+- Keep simple answers concise and complex answers detailed.
+- Use tables only when they genuinely improve understanding.
 
-When creating a lesson, include:
+FOR LESSON PLANNING, INCLUDE:
+1. Lesson Title
+2. Learning Objectives
+3. Required Materials
+4. Introduction
+5. Empathize
+6. Define
+7. Ideate
+8. Prototype
+9. Test
+10. Step-by-Step Teaching Procedure
+11. Group Activity
+12. Worksheet or Practice Questions
+13. Assessment
+14. Expected Learning Outcomes
+15. Homework or Extension Activity
 
-1. Learning Objective
-2. Activity Name
-3. Empathize
-4. Define
-5. Ideate
-6. Prototype
-7. Test
-8. Group Activity
-9. Worksheet/Task
-10. Expected Learning Outcome
+FOR GENERAL EDUCATIONAL QUESTIONS, USE WHEN RELEVANT:
+1. Simple Definition
+2. Detailed Explanation
+3. Step-by-Step Breakdown
+4. Real-Life Examples
+5. Practical Applications
+6. Summary
+7. Practice Questions
 
-Use simple English and make activities suitable for the given class.
+DESIGN THINKING:
+Explain Empathize, Define, Ideate, Prototype and Test when
+relevant to the question or classroom activity.
 
-If the user asks something unrelated to education or lesson planning,
-politely redirect them toward lesson planning and classroom activities.
+TEACHING STYLE:
+Be patient, encouraging and helpful.
+Make activities practical for teachers and students.
+Ask a short clarifying question if essential information is missing.
+Politely redirect unrelated questions toward educational topics.
 """
 
-# App title
-st.title("📚 AI Lesson Assistant")
-
-st.caption(
-    "Smart Education System – AI-powered support for creative classroom activities"
-)
-
-# Initialize chat history
+# ---------------- SESSION STATE ----------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Sidebar
+# ---------------- SIDEBAR ----------------
 with st.sidebar:
-    st.header("⚙️ Controls")
+    st.markdown("# 📘 Smart Education")
+    st.markdown("### AI Lesson Assistant")
+    st.markdown("---")
 
-    if st.button("🗑️ Clear Chat"):
+    page = st.radio(
+        "Navigation",
+        ["🏠 Lesson Planner", "💬 AI Chat Assistant"],
+        label_visibility="visible"
+    )
+
+    st.markdown("---")
+    st.markdown("**Your teaching workspace**")
+    st.caption("Plan lessons. Explore ideas. Inspire learning.")
+
+    if st.button("🗑️ Clear Chat", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
 
     st.markdown("---")
+    st.caption("Powered by Gemini AI")
 
-    st.write("**Project:** Smart Education System")
-    st.write("**Module:** AI Lesson Assistant")
+# ---------------- HERO ----------------
+st.markdown("""
+<div class="hero">
+    <h1>📘 Smart Education System</h1>
+    <p>
+        Your AI-powered teaching partner for creative lessons,
+        classroom activities and better learning experiences.
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
-# Lesson details
-st.subheader("Create a Lesson")
+# ---------------- LESSON PLANNER ----------------
+if page == "🏠 Lesson Planner":
 
-subject = st.text_input(
-    "📖 Subject",
-    placeholder="Example: Science"
-)
+    st.markdown("## ✨ Create Your Lesson")
+    st.write(
+        "Fill in the details below to generate a structured, "
+        "classroom-ready lesson plan."
+    )
 
-grade = st.text_input(
-    "🎓 Class / Grade",
-    placeholder="Example: Class 8"
-)
+    with st.container(border=True):
+        subject = st.text_input(
+            "📚 Subject",
+            placeholder="e.g. Science, Mathematics, English"
+        )
 
-topic = st.text_input(
-    "📌 Topic",
-    placeholder="Example: Water Conservation"
-)
+        grade = st.text_input(
+            "🎓 Class / Grade",
+            placeholder="e.g. Class 8"
+        )
 
-objective = st.text_area(
-    "🎯 Learning Objective",
-    placeholder="Example: Students will understand the importance of saving water."
-)
+        topic = st.text_input(
+            "📌 Lesson Topic",
+            placeholder="e.g. Water Conservation"
+        )
 
-# Generate lesson
-if st.button("✨ Generate Lesson", use_container_width=True):
+        objective = st.text_area(
+            "🎯 Learning Objective (optional)",
+            placeholder="What should students learn from this lesson?",
+            height=110
+        )
 
-    if not subject or not grade or not topic:
-        st.warning("Please enter Subject, Class/Grade and Topic.")
+        generate = st.button(
+            "✨ Generate Lesson Plan",
+            use_container_width=True
+        )
 
-    else:
-        lesson_request = f"""
-Create a complete creative classroom lesson.
+    if generate:
+        if not subject.strip() or not grade.strip() or not topic.strip():
+            st.warning(
+                "Please enter the Subject, Class/Grade and Topic."
+            )
+        else:
+            lesson_request = f"""
+Create a complete, practical classroom lesson plan.
 
 Subject: {subject}
 Class/Grade: {grade}
 Topic: {topic}
-Learning Objective: {objective if objective else "Create a suitable learning objective."}
+Learning Objective: {objective.strip() or "Create a suitable objective."}
 
-Use the following structure:
+Explain the lesson in simple English, with clear headings
+and practical examples suitable for this grade.
 
-1. Learning Objective
-2. Activity Name
-3. Empathize
-4. Define
-5. Ideate
-6. Prototype
-7. Test
-8. Group Activity
-9. Worksheet/Task
-10. Expected Learning Outcome
+Include:
+1. Lesson Title
+2. Learning Objectives
+3. Required Materials
+4. Introduction
+5. Empathize
+6. Define
+7. Ideate
+8. Prototype
+9. Test
+10. Step-by-Step Teaching Procedure
+11. Group Activity
+12. Worksheet or Practice Questions
+13. Assessment
+14. Expected Learning Outcomes
+15. Homework or Extension Activity
 
-Make it practical and easy for a teacher to conduct in a classroom.
+Make the lesson easy for a teacher to conduct.
+Include suggested timings when useful.
 """
 
-        with st.spinner("🤖 Creating your lesson..."):
-
-            try:
-                response = client.models.generate_content(
-                    model="gemini-3.5-flash-lite",
-                    contents=lesson_request,
-                    config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_PROMPT
+            with st.spinner("🤖 Creating your lesson plan..."):
+                try:
+                    response = client.models.generate_content(
+                        model="gemini-3.5-flash-lite",
+                        contents=lesson_request,
+                        config=types.GenerateContentConfig(
+                            system_instruction=SYSTEM_PROMPT,
+                            temperature=0.5
+                        )
                     )
-                )
 
-                answer = response.text
+                    answer = response.text
 
-                st.session_state.messages.append({
-                    "role": "user",
-                    "content": lesson_request
-                })
+                    if not answer:
+                        st.error(
+                            "The AI returned an empty response. Please try again."
+                        )
+                    else:
+                        st.session_state.messages.extend([
+                            {
+                                "role": "user",
+                                "content": lesson_request
+                            },
+                            {
+                                "role": "assistant",
+                                "content": answer
+                            }
+                        ])
 
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": answer
-                })
+                        st.success("Your lesson plan is ready!")
 
-                st.success("Lesson generated successfully!")
+                        st.markdown("### 📖 Your Generated Lesson")
+                        st.markdown(answer)
 
-            except Exception as e:
-                st.error(
-                    "Sorry, I could not generate the lesson. "
-                    "Please check your Gemini API key and internet connection."
-                )
-                st.error(f"Error: {e}")
+                        st.download_button(
+                            "⬇️ Download Lesson Plan",
+                            data=answer,
+                            file_name="lesson_plan.txt",
+                            mime="text/plain",
+                            use_container_width=True
+                        )
 
-# Display chat history
-for message in st.session_state.messages:
+                except Exception as e:
+                    st.error(
+                        "Unable to generate the lesson. Check your "
+                        "API key, model availability and internet connection."
+                    )
+                    st.error(f"Technical details: {e}")
 
-    if message["role"] == "user":
-        with st.chat_message("user"):
-            st.write(message["content"])
+# ---------------- AI CHAT ASSISTANT ----------------
+elif page == "💬 AI Chat Assistant":
 
-    elif message["role"] == "assistant":
-        with st.chat_message("assistant"):
-            st.markdown(message["content"])
+    st.markdown("## 💬 AI Chat Assistant")
+    st.write(
+        "Ask educational questions, request examples or improve "
+        "your lesson plans with follow-up questions."
+    )
 
-# Follow-up chat
-user_question = st.chat_input(
-    "Ask the AI Lesson Assistant a follow-up question..."
-)
-
-if user_question:
-
-    with st.chat_message("user"):
-        st.write(user_question)
-
-    # Build conversation
-    conversation = []
-
-    for message in st.session_state.messages:
-        conversation.append(
-            f"{message['role']}: {message['content']}"
+    if not st.session_state.messages:
+        st.info(
+            "👋 Welcome! Try asking: "
+            "\"Explain Design Thinking with a classroom example.\""
         )
 
-    conversation.append(f"user: {user_question}")
+        st.markdown("### Suggested questions")
 
-    full_prompt = "\n\n".join(conversation)
+        suggestions = [
+            "Explain Design Thinking in simple English",
+            "Create a science activity for Class 8",
+            "Make a worksheet on water conservation"
+        ]
 
-    with st.chat_message("assistant"):
+        for suggestion in suggestions:
+            if st.button(suggestion, use_container_width=True):
+                st.session_state.pending_question = suggestion
+                st.rerun()
 
-        with st.spinner("🤖 Thinking..."):
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-            try:
-                response = client.models.generate_content(
-                    model="gemini-3.5-flash-lite",
-                    contents=full_prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_PROMPT
+    typed_question = st.chat_input(
+        "Ask an educational question..."
+    )
+
+    pending_question = st.session_state.pop(
+        "pending_question", None
+    )
+
+    user_question = typed_question or pending_question
+
+    if user_question:
+        st.session_state.messages.append({
+            "role": "user",
+            "content": user_question
+        })
+
+        with st.chat_message("user"):
+            st.markdown(user_question)
+
+        conversation = []
+
+        for message in st.session_state.messages:
+            role = (
+                "Teacher"
+                if message["role"] == "user"
+                else "Assistant"
+            )
+            conversation.append(
+                f"{role}: {message['content']}"
+            )
+
+        full_prompt = "\n\n".join(conversation)
+
+        with st.chat_message("assistant"):
+            with st.spinner("🤖 Preparing a clear explanation..."):
+                try:
+                    response = client.models.generate_content(
+                        model="gemini-3.5-flash-lite",
+                        contents=full_prompt,
+                        config=types.GenerateContentConfig(
+                            system_instruction=SYSTEM_PROMPT,
+                            temperature=0.5
+                        )
                     )
-                )
 
-                answer = response.text
+                    answer = response.text
 
-                st.markdown(answer)
+                    if not answer:
+                        st.error(
+                            "The AI returned an empty response. Please try again."
+                        )
+                    else:
+                        st.markdown(answer)
 
-                st.session_state.messages.append({
-                    "role": "user",
-                    "content": user_question
-                })
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": answer
+                        })
 
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": answer
-                })
+                except Exception as e:
+                    st.error(
+                        "Unable to contact Gemini. Please check your "
+                        "API key, model availability and internet connection."
+                    )
+                    st.error(f"Technical details: {e}")
 
-            except Exception as e:
-                st.error(
-                    "Sorry, something went wrong while contacting Gemini."
-                )
-                st.error(f"Error: {e}")
+# ---------------- FOOTER ----------------
+st.markdown("---")
+st.markdown("""
+<div class="footer">
+    📘 Smart Education System · AI-powered learning and lesson planning
+</div>
+""", unsafe_allow_html=True)
